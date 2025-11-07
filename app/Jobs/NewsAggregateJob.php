@@ -29,10 +29,12 @@ class NewsAggregateJob implements ShouldQueue
     public int $timeout = 900;
 
     public function __construct(
-        public string $sourceKey,
+        public string  $sourceKey,
         public ?string $sinceIso = null,
-        public int $chunkSize = 500
-    ) {}
+        public int     $chunkSize = 500
+    )
+    {
+    }
 
     public function middleware(): array
     {
@@ -52,24 +54,11 @@ class NewsAggregateJob implements ShouldQueue
      */
     public function handle(): void
     {
+        /** @var object{pull: callable} $concreteClient */
         $concreteClient = App::make("news.client.{$this->sourceKey}");
         $since = $this->sinceIso ? Carbon::parse($this->sinceIso) : null;
 
         $buffer = [];
-
-        $flush = function () use (&$buffer) {
-            if (! $buffer) {
-                return;
-            }
-            DB::transaction(function () use (&$buffer) {
-                DB::table('articles')->upsert(
-                    $buffer,
-                    ['url'],
-                    ['title', 'summary', 'authors', 'category', 'published_at', 'raw', 'source', 'external_id', 'updated_at']
-                );
-            }, 3);
-            $buffer = [];
-        };
 
         foreach ($concreteClient->pull($since) as $item) {
             if (empty($item['url'])) {
@@ -78,26 +67,43 @@ class NewsAggregateJob implements ShouldQueue
 
             $buffer[] = [
                 'source' => $this->sourceKey,
-                'external_id' => $item['external_id'],
+                'external_id' => $item['external_id'] ?? null,
                 'url' => $item['url'],
-                'title' => $item['title'],
+                'title' => $item['title'] ?? '',
                 'summary' => $item['summary'] ?? null,
-                'authors' => $item['authors'] ? json_encode($item['authors']) : null,
+                'authors' => isset($item['authors']) ? json_encode($item['authors']) : null,
                 'category' => $item['category'] ?? null,
-                'published_at' => ! empty($item['published_at']) ? Carbon::parse($item['published_at']) : null,
+                'published_at' => isset($item['published_at']) ? Carbon::parse($item['published_at']) : null,
                 'raw' => json_encode($item['raw'] ?? []),
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
 
             if (count($buffer) >= $this->chunkSize) {
-                $flush();
+                $this->flushBuffer($buffer);
             }
-            $this->clearArticleCache();
         }
 
-        $flush();
+        $this->flushBuffer($buffer);
+    }
 
+    private function flushBuffer(array &$buffer): void
+    {
+        if (count($buffer) === 0) {
+            return;
+        }
+
+        DB::transaction(function () use (&$buffer): void {
+            DB::table('articles')->upsert(
+                $buffer,
+                ['url'],
+                ['title', 'summary', 'authors', 'category', 'published_at', 'raw', 'source', 'external_id', 'updated_at']
+            );
+        }, 3);
+
+        $buffer = [];
+
+        $this->clearArticleCache();
     }
 
     protected function clearArticleCache(): void

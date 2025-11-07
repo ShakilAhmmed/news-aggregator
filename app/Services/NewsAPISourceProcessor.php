@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Http;
 
 class NewsAPISourceProcessor implements NewsSourceContract
 {
-    public function __construct(private string $apiKey) {}
+    public function __construct(private string $apiKey)
+    {
+    }
 
     public function sourceKey(): string
     {
@@ -30,7 +32,7 @@ class NewsAPISourceProcessor implements NewsSourceContract
      */
     public function pull(?Carbon $since = null): Generator
     {
-        if (! $this->apiKey) {
+        if (!$this->apiKey) {
             return;
         }
         $page = 1;
@@ -55,7 +57,7 @@ class NewsAPISourceProcessor implements NewsSourceContract
                 ->throw()
                 ->json();
             $articles = $resp['articles'] ?? [];
-            $totalResults = $totalResults ?? (int) ($resp['total'] ?? 0);
+            $totalResults = (int)($resp['total'] ?? 0);
             if (empty($articles)) {
                 break;
             }
@@ -80,7 +82,7 @@ class NewsAPISourceProcessor implements NewsSourceContract
             if ($count < $pageSize) {
                 break;
             }
-            if ($totalResults && $totalFetched >= $totalResults) {
+            if ($totalFetched >= $totalResults) {
                 break;
             }
             $page++;

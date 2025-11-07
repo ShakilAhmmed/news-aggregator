@@ -12,9 +12,7 @@ use Illuminate\Support\Facades\Http;
 
 class NewsAPISourceProcessor implements NewsSourceContract
 {
-    public function __construct(private string $apiKey)
-    {
-    }
+    public function __construct(private string $apiKey) {}
 
     public function sourceKey(): string
     {
@@ -32,18 +30,19 @@ class NewsAPISourceProcessor implements NewsSourceContract
      */
     public function pull(?Carbon $since = null): Generator
     {
-        if (!$this->apiKey) {
+        if (! $this->apiKey) {
             return;
         }
+
         $page = 1;
         $pageSize = 100;
-        $totalFetched = 0;
-        $totalResults = 0;
+        $fetched = 0;
+        $total = 0;
 
         while (true) {
             $params = [
                 'apiKey' => $this->apiKey,
-                'pageSize' => 100,
+                'pageSize' => $pageSize,
                 'page' => $page,
                 'sortBy' => 'publishedAt',
                 'language' => 'en',
@@ -56,35 +55,37 @@ class NewsAPISourceProcessor implements NewsSourceContract
                 ->get($this->sourceUrl(), $params)
                 ->throw()
                 ->json();
+
+            $total = $total ?: (int) ($resp['totalResults'] ?? $resp['total'] ?? 0);
             $articles = $resp['articles'] ?? [];
-            $totalResults = (int)($resp['total'] ?? 0);
+
             if (empty($articles)) {
                 break;
             }
 
-            foreach ($articles as $article) {
-                if (empty($article['url'])) {
+            foreach ($articles as $a) {
+                if (empty($a['url'])) {
                     continue;
                 }
+
                 yield [
                     'external_id' => null,
-                    'url' => $article['url'] ?? '',
-                    'title' => $article['title'] ?? '',
-                    'summary' => $article['description'] ?? null,
-                    'authors' => $article['author'] ? [$article['author']] : null,
-                    'category' => data_get($article, 'source.name'),
-                    'published_at' => $article['publishedAt'] ?? null,
-                    'raw' => $article,
+                    'url' => $a['url'] ?? '',
+                    'title' => $a['title'] ?? '',
+                    'summary' => $a['description'] ?? null,
+                    'authors' => ! empty($a['author']) ? [$a['author']] : null,
+                    'category' => data_get($a, 'source.name'),
+                    'published_at' => $a['publishedAt'] ?? null,
+                    'raw' => $a,
                 ];
             }
-            $count = count($articles);
-            $totalFetched += $count;
-            if ($count < $pageSize) {
+
+            $fetched += count($articles);
+
+            if ($total > 0 && $fetched >= $total) {
                 break;
             }
-            if ($totalFetched >= $totalResults) {
-                break;
-            }
+
             $page++;
         }
     }

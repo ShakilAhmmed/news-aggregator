@@ -50,7 +50,11 @@ class NYTSourceProcessor implements NewsSourceContract
                 ->throw()
                 ->json();
             $docs = data_get($resp, 'response.docs', []);
-            $hits = (int) data_get($docs, 'response.metadata.hits', 0);
+            $hits = (int) (
+                data_get($resp, 'response.meta.hits') ??
+                data_get($resp, 'response.metadata.hits') ??
+                0
+            );
 
             if (empty($docs)) {
                 break;

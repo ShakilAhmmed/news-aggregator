@@ -12,9 +12,7 @@ use Illuminate\Support\Facades\Http;
 
 class GuardianSourceProcessor implements NewsSourceContract
 {
-    public function __construct(private string $apiKey)
-    {
-    }
+    public function __construct(private string $apiKey) {}
 
     public function sourceKey(): string
     {
@@ -32,7 +30,7 @@ class GuardianSourceProcessor implements NewsSourceContract
      */
     public function pull(?Carbon $since = null): Generator
     {
-        if (!$this->apiKey) {
+        if (! $this->apiKey) {
             return;
         }
 

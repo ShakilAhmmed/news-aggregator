@@ -2,13 +2,9 @@ name: CI (news-aggregator)
 
 on:
   push:
-    branches: ["**"]
-    paths:
-      - ".github/workflows/workflow.yml"
+    branches: [ "**" ]
   pull_request:
-    branches: ["**"]
-    paths:
-      - ".github/workflows/workflow.yml"
+    branches: [ "**" ]
   workflow_dispatch:
 
 jobs:

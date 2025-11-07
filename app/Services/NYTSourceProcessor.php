@@ -56,20 +56,20 @@ class NYTSourceProcessor implements NewsSourceContract
                 break;
             }
 
-            foreach ($docs as $d) {
-                $url = $d['web_url'] ?? null;
+            foreach ($docs as $doc) {
+                $url = $doc['web_url'] ?? null;
                 if (! $url) {
                     continue;
                 }
                 yield [
-                    'external_id' => $d['_id'] ?? null,
+                    'external_id' => $doc['_id'] ?? null,
                     'url' => $url,
-                    'title' => data_get($d, 'headline.main', ''),
-                    'summary' => $d['abstract'] ?? null,
-                    'authors' => collect($d['byline']['person'] ?? [])->map(fn ($p) => trim(($p['firstname'] ?? '').' '.($p['lastname'] ?? '')))->filter()->values()->all(),
-                    'category' => $d['section_name'] ?? null,
-                    'published_at' => $d['pub_date'] ?? null,
-                    'raw' => $d,
+                    'title' => data_get($doc, 'headline.main', ''),
+                    'summary' => $doc['abstract'] ?? null,
+                    'authors' => collect($doc['byline']['person'] ?? [])->map(fn ($p) => trim(($p['firstname'] ?? '').' '.($p['lastname'] ?? '')))->filter()->values()->all(),
+                    'category' => $doc['section_name'] ?? null,
+                    'published_at' => $doc['pub_date'] ?? null,
+                    'raw' => $doc,
                 ];
             }
 

@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Http;
 
 class GuardianSourceProcessor implements NewsSourceContract
 {
-    public function __construct(private string $apiKey) {}
+    public function __construct(private string $apiKey)
+    {
+    }
 
     public function sourceKey(): string
     {
@@ -30,7 +32,7 @@ class GuardianSourceProcessor implements NewsSourceContract
      */
     public function pull(?Carbon $since = null): Generator
     {
-        if (! $this->apiKey) {
+        if (!$this->apiKey) {
             return;
         }
 
@@ -52,16 +54,16 @@ class GuardianSourceProcessor implements NewsSourceContract
             $data = $resp->throw()->json();
             $results = data_get($data, 'response.results', []);
 
-            foreach ($results as $r) {
+            foreach ($results as $result) {
                 yield [
-                    'external_id' => $r['id'] ?? null,
-                    'url' => $r['webUrl'],
-                    'title' => $r['webTitle'] ?? '',
-                    'summary' => data_get($r, 'fields.trailText'),
+                    'external_id' => $result['id'] ?? null,
+                    'url' => $result['webUrl'],
+                    'title' => $result['webTitle'] ?? '',
+                    'summary' => data_get($result, 'fields.trailText'),
                     'authors' => null,
-                    'category' => $r['sectionName'] ?? null,
-                    'published_at' => $r['webPublicationDate'] ?? null,
-                    'raw' => $r,
+                    'category' => $result['sectionName'] ?? null,
+                    'published_at' => $result['webPublicationDate'] ?? null,
+                    'raw' => $result,
                 ];
             }
 

@@ -9,13 +9,10 @@ use Generator;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
-use function Symfony\Component\String\b;
 
 class NewsAPISourceProcessor implements NewsSourceContract
 {
-    public function __construct(private string $apiKey)
-    {
-    }
+    public function __construct(private string $apiKey) {}
 
     public function sourceKey(): string
     {
@@ -31,9 +28,9 @@ class NewsAPISourceProcessor implements NewsSourceContract
      * @throws RequestException
      * @throws ConnectionException
      */
-    public function pull(Carbon $since = null): Generator
+    public function pull(?Carbon $since = null): Generator
     {
-        if (!$this->apiKey) {
+        if (! $this->apiKey) {
             return;
         }
         $page = 1;
@@ -49,22 +46,24 @@ class NewsAPISourceProcessor implements NewsSourceContract
                 'sortBy' => 'publishedAt',
                 'language' => 'en',
             ];
-            if ($since) $params['from'] = $since->toIso8601String();
+            if ($since) {
+                $params['from'] = $since->toIso8601String();
+            }
 
             $resp = Http::retry(3, 500)
                 ->get($this->sourceUrl(), $params)
                 ->throw()
                 ->json();
             $articles = $resp['articles'] ?? [];
-            $totalResults = $totalResults ?? (int)($resp['total'] ?? 0);
+            $totalResults = $totalResults ?? (int) ($resp['total'] ?? 0);
             if (empty($articles)) {
                 break;
-            };
+            }
 
             foreach ($articles as $a) {
                 if (empty($a['url'])) {
                     continue;
-                };
+                }
                 yield [
                     'external_id' => null,
                     'url' => $a['url'] ?? '',
@@ -87,6 +86,4 @@ class NewsAPISourceProcessor implements NewsSourceContract
             $page++;
         }
     }
-
-
 }

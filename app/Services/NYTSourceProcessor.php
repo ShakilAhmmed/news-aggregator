@@ -12,9 +12,7 @@ use Illuminate\Support\Facades\Http;
 
 class NYTSourceProcessor implements NewsSourceContract
 {
-    public function __construct(private string $apiKey)
-    {
-    }
+    public function __construct(private string $apiKey) {}
 
     public function sourceKey(): string
     {
@@ -30,9 +28,9 @@ class NYTSourceProcessor implements NewsSourceContract
      * @throws RequestException
      * @throws ConnectionException
      */
-    public function pull(Carbon $since = null): Generator
+    public function pull(?Carbon $since = null): Generator
     {
-        if (!$this->apiKey) {
+        if (! $this->apiKey) {
             return;
         }
 
@@ -52,19 +50,23 @@ class NYTSourceProcessor implements NewsSourceContract
                 ->throw()
                 ->json();
             $docs = data_get($resp, 'response.docs', []);
-            $hits = (int)data_get($docs, 'response.metadata.hits', 0);
+            $hits = (int) data_get($docs, 'response.metadata.hits', 0);
 
-            if (empty($docs)) break;
+            if (empty($docs)) {
+                break;
+            }
 
             foreach ($docs as $d) {
                 $url = $d['web_url'] ?? null;
-                if (!$url) continue;
+                if (! $url) {
+                    continue;
+                }
                 yield [
                     'external_id' => $d['_id'] ?? null,
                     'url' => $url,
                     'title' => data_get($d, 'headline.main', ''),
                     'summary' => $d['abstract'] ?? null,
-                    'authors' => collect($d['byline']['person'] ?? [])->map(fn($p) => trim(($p['firstname'] ?? '') . ' ' . ($p['lastname'] ?? '')))->filter()->values()->all(),
+                    'authors' => collect($d['byline']['person'] ?? [])->map(fn ($p) => trim(($p['firstname'] ?? '').' '.($p['lastname'] ?? '')))->filter()->values()->all(),
                     'category' => $d['section_name'] ?? null,
                     'published_at' => $d['pub_date'] ?? null,
                     'raw' => $d,
@@ -73,9 +75,9 @@ class NYTSourceProcessor implements NewsSourceContract
 
             $page++;
 
-            if ($page * 10 >= $hits) break;
+            if ($page * 10 >= $hits) {
+                break;
+            }
         }
     }
-
-
 }

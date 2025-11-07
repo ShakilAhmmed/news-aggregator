@@ -16,13 +16,13 @@ class ArticleController extends Controller
     {
         try {
             $articles = $filter->execute($request);
-            logger()->info("article:fetch");
+            logger()->info('article:fetch');
 
             return $this->paginatedResponse(data: ArticleApiResource::collection($articles),
                 message: 'Articles fetched successfully.',
                 code: Response::HTTP_OK);
         } catch (Throwable $exception) {
-            logger()->critical('article:fetch -> ' . $exception->getMessage());
+            logger()->critical('article:fetch -> '.$exception->getMessage());
 
             return $this->errorResponse('Articles fetch failed.', Response::HTTP_INTERNAL_SERVER_ERROR);
         }

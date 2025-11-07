@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Article extends Model
 {
     protected $table = 'articles';
+
     protected $primaryKey = 'id';
+
     protected $fillable = [
         'source',
         'external_id',
@@ -17,7 +19,7 @@ class Article extends Model
         'authors',
         'category',
         'published_at',
-        'raw'
+        'raw',
     ];
 
     protected $casts = [

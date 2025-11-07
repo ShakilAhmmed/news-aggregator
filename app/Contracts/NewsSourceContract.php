@@ -10,7 +10,5 @@ interface NewsSourceContract
 
     public function sourceUrl(): string;
 
-    public function pull(Carbon $since = null);
-
-
+    public function pull(?Carbon $since = null);
 }

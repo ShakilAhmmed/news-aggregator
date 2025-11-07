@@ -30,6 +30,7 @@ class NewsAggregateCommand extends Command
 
     /**
      * Execute the console command.
+     *
      * @throws Throwable
      */
     public function handle(): int
@@ -46,7 +47,7 @@ class NewsAggregateCommand extends Command
         foreach ($selected as $key) {
             $cursorKey = "aggregate:{$key}";
             $since = $sinceOpt ?: Cache::get($cursorKey);
-            $jobs [] = new NewsAggregateJob($key, $since);
+            $jobs[] = new NewsAggregateJob($key, $since);
         }
 
         Bus::batch($jobs)->name('news-aggregator')
@@ -56,10 +57,9 @@ class NewsAggregateCommand extends Command
                 }
             })->dispatch();
 
-        $this->info("Dispatched aggregation batch:" . implode(', ', $clients));
+        $this->info('Dispatched aggregation batch:'.implode(', ', $clients));
 
         return self::SUCCESS;
-
 
     }
 }

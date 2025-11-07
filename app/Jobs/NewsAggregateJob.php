@@ -18,28 +18,27 @@ use Illuminate\Support\Facades\DB;
 
 class NewsAggregateJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Batchable;
-
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 5;
+
     public int $maxExceptions = 3;
+
     public array $backoff = [60, 120, 300, 600, 900];
+
     public int $timeout = 900;
 
-
     public function __construct(
-        public string  $sourceKey,
+        public string $sourceKey,
         public ?string $sinceIso = null,
-        public int     $chunkSize = 500
-    )
-    {
-    }
+        public int $chunkSize = 500
+    ) {}
 
     public function middleware(): array
     {
         return [
             (new WithoutOverlapping("aggregate:{$this->sourceKey}"))->expireAfter(3600),
-            new RateLimited("rate:{$this->sourceKey}")
+            new RateLimited("rate:{$this->sourceKey}"),
         ];
     }
 
@@ -47,7 +46,6 @@ class NewsAggregateJob implements ShouldQueue
     {
         return now()->addHours(6);
     }
-
 
     /**
      * Execute the job.
@@ -60,7 +58,9 @@ class NewsAggregateJob implements ShouldQueue
         $buffer = [];
 
         $flush = function () use (&$buffer) {
-            if (!$buffer) return;
+            if (! $buffer) {
+                return;
+            }
             DB::transaction(function () use (&$buffer) {
                 DB::table('articles')->upsert(
                     $buffer,
@@ -72,7 +72,9 @@ class NewsAggregateJob implements ShouldQueue
         };
 
         foreach ($concreteClient->pull($since) as $item) {
-            if (empty($item['url'])) continue;
+            if (empty($item['url'])) {
+                continue;
+            }
 
             $buffer[] = [
                 'source' => $this->sourceKey,
@@ -82,13 +84,15 @@ class NewsAggregateJob implements ShouldQueue
                 'summary' => $item['summary'] ?? null,
                 'authors' => $item['authors'] ? json_encode($item['authors']) : null,
                 'category' => $item['category'] ?? null,
-                'published_at' => !empty($item['published_at']) ? Carbon::parse($item['published_at']) : null,
+                'published_at' => ! empty($item['published_at']) ? Carbon::parse($item['published_at']) : null,
                 'raw' => json_encode($item['raw'] ?? []),
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
 
-            if (count($buffer) >= $this->chunkSize) $flush();
+            if (count($buffer) >= $this->chunkSize) {
+                $flush();
+            }
             $this->clearArticleCache();
         }
 

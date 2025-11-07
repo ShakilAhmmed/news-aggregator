@@ -10,9 +10,9 @@ trait ApiAble
     /**
      * Success response  function
      *
-     * @param mixed $data Main data pass.
-     * @param string|null $message Some message.
-     * @param int $code Status code pass.
+     * @param  mixed  $data  Main data pass.
+     * @param  string|null  $message  Some message.
+     * @param  int  $code  Status code pass.
      */
     protected function successResponse(mixed $data = [], ?string $message = null, int $code = Response::HTTP_OK): JsonResponse
     {
@@ -27,8 +27,8 @@ trait ApiAble
     /**
      * Error response  function
      *
-     * @param string $message Some message.
-     * @param int $code Status code pass.
+     * @param  string  $message  Some message.
+     * @param  int  $code  Status code pass.
      */
     protected function paginatedResponse($data, string $message, int $code): JsonResponse
     {

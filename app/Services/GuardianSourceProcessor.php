@@ -12,9 +12,7 @@ use Illuminate\Support\Facades\Http;
 
 class GuardianSourceProcessor implements NewsSourceContract
 {
-    public function __construct(private string $apiKey)
-    {
-    }
+    public function __construct(private string $apiKey) {}
 
     public function sourceKey(): string
     {
@@ -30,9 +28,9 @@ class GuardianSourceProcessor implements NewsSourceContract
      * @throws RequestException
      * @throws ConnectionException
      */
-    public function pull(Carbon $since = null): Generator
+    public function pull(?Carbon $since = null): Generator
     {
-        if (!$this->apiKey) {
+        if (! $this->apiKey) {
             return;
         }
 
@@ -44,7 +42,9 @@ class GuardianSourceProcessor implements NewsSourceContract
             'show-fields' => 'trailText',
             'show-tags' => 'contributor',
         ];
-        if ($since) $params['from-date'] = $since->toDateString();
+        if ($since) {
+            $params['from-date'] = $since->toDateString();
+        }
         while (true) {
             $resp = Http::retry(3, 500)
                 ->get($this->sourceUrl(), $params + ['page' => $page]);
@@ -69,10 +69,8 @@ class GuardianSourceProcessor implements NewsSourceContract
             $pages = data_get($data, 'response.pages', 1);
             if ($current >= $pages) {
                 break;
-            };
+            }
             $page++;
         }
     }
-
-
 }

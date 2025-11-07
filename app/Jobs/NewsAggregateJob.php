@@ -29,12 +29,10 @@ class NewsAggregateJob implements ShouldQueue
     public int $timeout = 900;
 
     public function __construct(
-        public string  $sourceKey,
+        public string $sourceKey,
         public ?string $sinceIso = null,
-        public int     $chunkSize = 500
-    )
-    {
-    }
+        public int $chunkSize = 500
+    ) {}
 
     public function middleware(): array
     {

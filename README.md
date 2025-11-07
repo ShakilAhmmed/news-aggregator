@@ -115,6 +115,9 @@ app/Contracts:
     - Symfony Dump Server
     - PHP Insights
 ```
+```bash
+Github Action will trigger .github/workflows/workflow.yml (Larastan,Pest,Larvel Pint)
+```
 
 ## TODO
 

@@ -12,7 +12,7 @@ it('yields newsapi articles until all fetched', function () {
         'newsapi.org/*' => Http::sequence()
             ->push([
                 'status' => 'ok',
-                'total' => 3,  // your implementation reads "total"
+                'total' => 3,
                 'articles' => [
                     [
                         'url' => 'https://example.com/n1',

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Http;
 it('yields guardian articles across pages', function () {
     Config::set('aggregator.guardian.url', 'https://content.guardianapis.com/search');
 
-    // Page 1 (2 results), total pages = 2
+
     Http::fake([
         'content.guardianapis.com/*' => Http::sequence()
             ->push([

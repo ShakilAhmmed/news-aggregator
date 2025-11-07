@@ -12,7 +12,7 @@ it('yields NYT docs across pages based on hits', function () {
         'api.nytimes.com/*' => Http::sequence()
             ->push([
                 'response' => [
-                    'meta' => ['hits' => 15], // or 'metadata' => ['hits' => 15]
+                    'meta' => ['hits' => 15],
                     'docs' => array_map(fn ($i) => [
                         '_id' => "nyt-$i",
                         'web_url' => "https://example.com/nyt-$i",

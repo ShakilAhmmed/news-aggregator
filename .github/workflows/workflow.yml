@@ -94,7 +94,7 @@ jobs:
       - name: Run Pest
         run: |
           if [ -x vendor/bin/pest ]; then
-            vendor/bin/pest --colors=always --parallel
+            vendor/bin/pest --colors=always --parallel --verbose
           else
             ./vendor/bin/phpunit --colors=always
           fi

@@ -1,0 +1,138 @@
+name: CI (news-aggregator)
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - ".github/workflows/workflow.yml"
+  pull_request:
+    branches: ["**"]
+    paths:
+      - ".github/workflows/workflow.yml"
+  workflow_dispatch:
+
+jobs:
+  static-analysis:
+    name: Larastan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, intl, pcntl, pdo, sqlite, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache/files
+            vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Larastan
+        run: |
+          if [ -x vendor/bin/phpstan ]; then
+            if [ -f phpstan.neon ]; then
+              vendor/bin/phpstan analyse --memory-limit=1G
+            else
+              vendor/bin/phpstan analyse --memory-limit=1G --configuration=phpstan.neon.dist
+            fi
+          else
+            echo "phpstan not installed; skipping."
+          fi
+
+  tests:
+    name: Pest
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:EkMrU6Sl8ygYmwRrSeWGJbokfEFPPi308T6zvBuYfOA=
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /tmp/database.sqlite
+      CACHE_STORE: array
+      CACHE_DRIVER: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
+      BROADCAST_DRIVER: log
+      LOG_CHANNEL: stack
+      MAIL_MAILER: log
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, intl, pcntl, pdo, sqlite, pdo_sqlite, fileinfo
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache/files
+            vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Prepare app
+        run: |
+          touch /tmp/database.sqlite
+          php artisan config:clear
+          php artisan cache:clear
+
+      - name: Migrate
+        run: php artisan migrate --force
+
+      - name: Run Pest
+        run: |
+          if [ -x vendor/bin/pest ]; then
+            vendor/bin/pest --colors=always --parallel
+          else
+            ./vendor/bin/phpunit --colors=always
+          fi
+        timeout-minutes: 10
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laravel-logs
+          path: storage/logs/*.log
+
+  lint:
+    name: Laravel Pint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache/files
+            vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run Laravel Pint (lint check only)
+        run: ./vendor/bin/pint --test

@@ -1,0 +1,71 @@
+services:
+  news_aggregator:
+    build:
+      args:
+        user: ShakilAhmmed
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: news-aggregator-backend
+    container_name: news-aggregator-backend
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+      - ./.docker/app/php-fpm.ini:/usr/local/etc/php/conf.d/99-app.ini
+    depends_on:
+      - news_aggregator_database
+    links:
+      - news_aggregator_database
+    networks:
+      - news-aggregator-backend-network
+  news_aggregator_nginx:
+    image: nginx:alpine
+    container_name: news-aggregator-backend-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT}:80"
+    volumes:
+      - ./:/var/www
+      - ./.docker/nginx:/etc/nginx/conf.d/
+    networks:
+      - news-aggregator-backend-network
+    depends_on:
+      - news_aggregator_database
+      - news_aggregator_phpmyadmin
+  news_aggregator_database:
+    image: mariadb
+    container_name: news-aggregator-backend-database
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - ./mysql:/var/lib/mysql
+    networks:
+      - news-aggregator-backend-network
+  news_aggregator_phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: news-aggregator-backend-phpmyadmin
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      - news_aggregator_database
+    ports:
+      - "${PMA_PORT}:80"
+    environment:
+      PMA_HOST: news_aggregator_database
+      PMA_PORT: 3306
+      PMA_USER: ${DB_USERNAME}
+      PMA_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      UPLOAD_LIMIT: 2048M
+    networks:
+      - news-aggregator-backend-network
+networks:
+  news-aggregator-backend-network:
+    driver: bridge

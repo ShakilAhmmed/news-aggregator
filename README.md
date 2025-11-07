@@ -116,7 +116,7 @@ app/Contracts:
     - PHP Insights
 ```
 ```bash
-Github Action will trigger .github/workflows/workflow.yml (Larastan,Pest,Larvel Pint)
+Github Action will trigger .github/workflows/workflow.yml (Larastan,Pest,Laravel Pint)
 ```
 
 ## TODO
